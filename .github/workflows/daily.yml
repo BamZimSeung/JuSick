@@ -2,8 +2,8 @@ name: Daily Stock Picks → Telegram
 
 on:
   schedule:
-    # 매일 22:00 UTC = 07:00 KST 다음날
-    - cron: '0 22 * * *'
+    # 매일 23:30 UTC = 08:30 KST 다음날
+    - cron: '30 23 * * *'
   workflow_dispatch: {}
 
 jobs:
