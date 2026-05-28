@@ -1,0 +1,9 @@
+# 가상환경 / 캐시 / 파이썬
+.venv/
+cache/
+__pycache__/
+*.pyc
+
+# 비밀키 (토큰 등) - 절대 커밋 금지
+secret_config.py
+.env
