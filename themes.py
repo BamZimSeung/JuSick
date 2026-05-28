@@ -107,6 +107,45 @@ def match_themes(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+# ── 동반강세 발굴 ─────────────────────────────────────────
+def discover_hot_themes(
+    scored_df: pd.DataFrame,
+    group_col: str = "industry",
+    min_stocks: int = 3,
+    top_n: int = 5,
+    momentum_col: str = "score_momentum",
+) -> pd.DataFrame:
+    """같은 산업의 여러 종목이 동시에 강세인 그룹을 찾는다.
+
+    부상 중인 테마의 후행 신호 — 솔로 급등이 아니라 산업 전체가 움직일 때만 잡힌다.
+    """
+    df = scored_df.copy()
+    df = df[df[group_col].notna() & (df[group_col].astype(str).str.strip() != "")]
+    if df.empty:
+        return pd.DataFrame(columns=[group_col, "n_stocks", "median_momentum",
+                                     "median_ret_6m", "reps"])
+
+    grp = (df.groupby(group_col)
+           .agg(n_stocks=("code", "count"),
+                median_momentum=(momentum_col, "median"),
+                median_ret_6m=("ret_6m", "median"))
+           .reset_index())
+    grp = grp[grp["n_stocks"] >= min_stocks]
+    grp = grp.sort_values("median_momentum", ascending=False).head(top_n)
+
+    # 그룹별 모멘텀 상위 3종목을 대표로
+    def reps_for(g):
+        sub = df[df[group_col] == g].sort_values(momentum_col, ascending=False).head(3)
+        return [(str(n), str(c)) for n, c in zip(sub["name"], sub["code"])]
+
+    grp["reps"] = grp[group_col].map(reps_for)
+    # CSV 저장용 문자열 (e.g. "삼성전자|005930;SK하이닉스|000660")
+    grp["reps_str"] = grp["reps"].apply(
+        lambda xs: ";".join(f"{n}|{c}" for n, c in xs)
+    )
+    return grp.reset_index(drop=True)
+
+
 if __name__ == "__main__":
     # 간단 점검
     import sys

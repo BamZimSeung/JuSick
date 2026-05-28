@@ -56,14 +56,32 @@ def main():
     if krg:
         krg_df = pd.read_csv(krg, dtype={"code": str})
         notify.send_telegram(report.build_growth_message("🇰🇷 한국", krg_df, _date_of(krg)))
-    # 3) 미국 종합
+    # 3) 한국 동반강세 산업
+    krh = _latest("hot_themes_kr_*.csv")
+    if krh:
+        try:
+            krh_df = pd.read_csv(krh)
+            if not krh_df.empty:
+                notify.send_telegram(report.build_discovery_message("🇰🇷 한국", krh_df, _date_of(krh)))
+        except Exception as e:
+            print(f"한국 동반강세 발송 스킵: {e}")
+    # 4) 미국 종합
     notify.send_telegram(report.build_message("🇺🇸 미국", us, "", _date_of(usp)))
-    # 4) 미국 성장 단일축
+    # 5) 미국 성장 단일축
     if usg:
         usg_df = pd.read_csv(usg, dtype={"code": str})
         notify.send_telegram(report.build_growth_message("🇺🇸 미국", usg_df, _date_of(usg)))
+    # 6) 미국 동반강세 산업
+    ush = _latest("hot_themes_us_*.csv")
+    if ush:
+        try:
+            ush_df = pd.read_csv(ush)
+            if not ush_df.empty:
+                notify.send_telegram(report.build_discovery_message("🇺🇸 미국", ush_df, _date_of(ush)))
+        except Exception as e:
+            print(f"미국 동반강세 발송 스킵: {e}")
 
-    print(f"발송 완료: 종합({krp}, {usp}) / 성장({krg}, {usg})")
+    print(f"발송 완료: 종합({krp}, {usp}) / 성장({krg}, {usg}) / 동반강세({krh}, {ush})")
 
 
 if __name__ == "__main__":

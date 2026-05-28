@@ -7,7 +7,7 @@
 """
 import argparse, datetime as dt, sys
 import pandas as pd
-import config, data_sources as ds, factors
+import config, data_sources as ds, factors, themes
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")   # 콘솔 한글 출력
@@ -66,6 +66,17 @@ def main():
     usg[OUT_COLS].to_csv(f"{config.CACHE_DIR}/picks_us_growth_{today}.csv",
                          index=False, encoding="utf-8-sig")
 
+    # 동반강세 산업 발굴 (full scored universe 기반)
+    HOT_COLS = ["industry", "n_stocks", "median_momentum", "median_ret_6m", "reps_str"]
+    kr_hot = themes.discover_hot_themes(
+        kr_scored, min_stocks=config.HOT_THEME_MIN_STOCKS, top_n=config.HOT_THEME_TOP_N)
+    us_hot = themes.discover_hot_themes(
+        us_scored, min_stocks=config.HOT_THEME_MIN_STOCKS, top_n=config.HOT_THEME_TOP_N)
+    kr_hot[HOT_COLS].to_csv(f"{config.CACHE_DIR}/hot_themes_kr_{today}.csv",
+                            index=False, encoding="utf-8-sig")
+    us_hot[HOT_COLS].to_csv(f"{config.CACHE_DIR}/hot_themes_us_{today}.csv",
+                            index=False, encoding="utf-8-sig")
+
     show = ["code", "score_total", "score_value", "score_quality",
             "score_growth", "score_momentum", "forwardPE",
             "returnOnEquity", "revenueGrowth", "ret_6m"]
@@ -77,7 +88,11 @@ def main():
     print(usp[show].round(3).to_string())
     print("\n========== 미국 성장 단일축 추천 ==========")
     print(usg[show].round(3).to_string())
-    print(f"\n결과 저장: cache/picks_(kr|us)(_growth)?_{today}.csv")
+    print("\n========== 한국 동반강세 산업 ==========")
+    print(kr_hot[["industry", "n_stocks", "median_momentum", "median_ret_6m"]].round(3).to_string())
+    print("\n========== 미국 동반강세 산업 ==========")
+    print(us_hot[["industry", "n_stocks", "median_momentum", "median_ret_6m"]].round(3).to_string())
+    print(f"\n결과 저장: cache/picks_(kr|us)(_growth)?_{today}.csv , hot_themes_(kr|us)_{today}.csv")
 
 
 if __name__ == "__main__":

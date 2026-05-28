@@ -131,6 +131,35 @@ def build_message(label, df, regime_note="", date_str=None):
     return "\n".join(out).strip()
 
 
+DISCOVERY_LEGEND = (
+    "📖 <b>동반강세 산업 — 안내</b>\n"
+    "같은 산업의 여러 종목이 동시에 강세인 영역. "
+    "솔로 급등이 아니라 산업 전체가 움직일 때 = 부상 중 테마의 신호."
+)
+
+
+def build_discovery_message(label, hot_df, date_str=None):
+    """동반강세 산업 Top N."""
+    date_str = date_str or dt.date.today().isoformat()
+    out = [f"🔥 <b>{label} 동반강세 산업 Top {len(hot_df)}</b>", f"📅 {date_str}",
+           "", DISCOVERY_LEGEND, ""]
+    for i, (_, r) in enumerate(hot_df.iterrows(), 1):
+        ind_raw = str(r["industry"])
+        ind = INDUSTRY_KO.get(ind_raw, ind_raw)
+        out.append("━━━━━━━━━━━━━━")
+        out.append(f"<b>{i}. {html.escape(ind)}</b>  ({int(r['n_stocks'])}종목)")
+        out.append(f"모멘텀 중앙 {r['median_momentum']:.2f}  ·  6개월 중앙 {_signed_pct(r['median_ret_6m'])}")
+        reps = str(r.get("reps_str") or "").strip()
+        if reps:
+            out.append("대표:")
+            for tok in reps.split(";"):
+                if "|" in tok:
+                    nm, cd = tok.split("|", 1)
+                    out.append(f"  · {html.escape(nm)} ({html.escape(cd)})")
+        out.append("")
+    return "\n".join(out).strip()
+
+
 GROWTH_LEGEND = (
     "📖 <b>성장 단일축 — 안내</b>\n"
     "우량(ROE·부채 등)·가치 요소를 빼고 매출·이익 성장만으로 줄세운 순위.\n"

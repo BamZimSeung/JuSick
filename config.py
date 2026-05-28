@@ -34,6 +34,10 @@ THEME_BOOST_MAX = 0.10       # 가산 상한 (테마 N개 매칭돼도 이만큼
 KR_GROWTH_PICKS = 10
 US_GROWTH_PICKS = 10
 
+# ── 동반강세 산업 발굴 ──────────────────────────────────
+HOT_THEME_MIN_STOCKS = 3   # 한 산업 내 최소 종목 수
+HOT_THEME_TOP_N = 5        # 발굴할 상위 산업 수
+
 # ── 데이터 수집 throttle ─────────────────────────────────
 YF_SLEEP = 0.25        # yfinance .info 호출 간 대기(초)
 YF_RETRY = 2           # 실패 시 재시도 횟수
