@@ -8,6 +8,7 @@ config 가중치로 합산해 종합 점수를 낸다.
 """
 import pandas as pd
 import config
+import themes
 
 
 def _rank_low_good(s: pd.Series) -> pd.Series:
@@ -63,4 +64,12 @@ def compute_scores(df: pd.DataFrame) -> pd.DataFrame:
         + w["growth"] * df["score_growth"]
         + w["momentum"] * df["score_momentum"]
     )
+
+    # 테마 매칭 → 테마 태그 + score_total 보너스
+    df = themes.match_themes(df)
+    df["themes_str"] = df["themes"].apply(lambda xs: ";".join(xs))   # CSV 저장용
+    bonus = (df["theme_count"] * config.THEME_BOOST_PER_HIT).clip(upper=config.THEME_BOOST_MAX)
+    df["theme_bonus"] = bonus
+    df["score_total"] = df["score_total"] + bonus
+
     return df.sort_values("score_total", ascending=False).reset_index(drop=True)

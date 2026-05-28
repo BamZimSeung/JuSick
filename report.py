@@ -88,6 +88,15 @@ def _business(r):
     return "—"
 
 
+def _themes(r):
+    """매칭된 메가테마 태그 한 줄. 없으면 None."""
+    raw = r.get("themes_str")
+    if pd.isna(raw) or not str(raw).strip():
+        return None
+    parts = [p.strip() for p in str(raw).split(";") if p.strip()]
+    return " · ".join(parts) if parts else None
+
+
 LEGEND = (
     "📖 <b>용어 설명</b>\n"
     "· PER : 주가가 한 해 이익의 몇 배인지 — 낮을수록 저평가\n"
@@ -99,7 +108,7 @@ LEGEND = (
 
 def build_message(label, df, regime_note="", date_str=None):
     date_str = date_str or dt.date.today().isoformat()
-    out = [f"📊 <b>{label} 추천 {len(df)}종목</b>", f"📅 {date_str}"]
+    out = [f"📊 <b>{label} 종합 추천 {len(df)}종목</b>", f"📅 {date_str}"]
     if regime_note:
         out.append(regime_note)
     out += ["", LEGEND, ""]
@@ -109,11 +118,43 @@ def build_message(label, df, regime_note="", date_str=None):
         out.append("━━━━━━━━━━━━━━")
         out.append(f"<b>{i}. {name}</b>  ({code})")
         out.append(f"💼 {_business(r)}")
-        out.append(f"종합점수 {r['score_total']:.2f} / 1.00")
+        themes_line = _themes(r)
+        if themes_line:
+            out.append(f"🌍 {html.escape(themes_line)}")
+        out.append(f"종합점수 {r['score_total']:.2f}")
         out.append(f"🏷 {_highlights(r)}")
         out.append(f"· PER  {_per(r['forwardPE'])}")
         out.append(f"· 수익성(ROE)  {_roe(r['returnOnEquity'])}")
         out.append(f"· 매출성장  {_signed_pct(r['revenueGrowth'])}")
+        out.append(f"· 최근 6개월 주가  {_signed_pct(r['ret_6m'])}")
+        out.append("")
+    return "\n".join(out).strip()
+
+
+GROWTH_LEGEND = (
+    "📖 <b>성장 단일축 — 안내</b>\n"
+    "우량(ROE·부채 등)·가치 요소를 빼고 매출·이익 성장만으로 줄세운 순위.\n"
+    "고성장 신흥주를 발견하는 용도 — 종합 추천보다 위험 큼."
+)
+
+
+def build_growth_message(label, df, date_str=None):
+    """성장 단일축 추천 — score_growth 기준 Top N."""
+    date_str = date_str or dt.date.today().isoformat()
+    out = [f"🚀 <b>{label} 성장 단일축 Top {len(df)}</b>", f"📅 {date_str}",
+           "", GROWTH_LEGEND, ""]
+    for i, (_, r) in enumerate(df.iterrows(), 1):
+        name = html.escape(str(r["name"]))
+        code = html.escape(str(r["code"]))
+        out.append("━━━━━━━━━━━━━━")
+        out.append(f"<b>{i}. {name}</b>  ({code})")
+        out.append(f"💼 {_business(r)}")
+        themes_line = _themes(r)
+        if themes_line:
+            out.append(f"🌍 {html.escape(themes_line)}")
+        out.append(f"성장점수 {r['score_growth']:.2f}")
+        out.append(f"· 매출성장  {_signed_pct(r['revenueGrowth'])}")
+        out.append(f"· 이익성장  {_signed_pct(r.get('earningsGrowth'))}")
         out.append(f"· 최근 6개월 주가  {_signed_pct(r['ret_6m'])}")
         out.append("")
     return "\n".join(out).strip()

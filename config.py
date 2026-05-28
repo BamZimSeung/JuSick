@@ -24,6 +24,16 @@ FACTOR_WEIGHTS = {
 CACHE_DIR = "cache"
 CACHE_HOURS = 12       # 이 시간 안의 캐시는 재사용 (yfinance 호출 절감)
 
+# ── 테마 부스트 ─────────────────────────────────────────
+# 메가테마(AI인프라·방산·조선 등) 매칭 시 score_total 가산.
+# 종합 추천에서 효성중공업 같은 구조적 수혜주를 부각시키는 용도.
+THEME_BOOST_PER_HIT = 0.04   # 매칭된 테마 하나당 가산
+THEME_BOOST_MAX = 0.10       # 가산 상한 (테마 N개 매칭돼도 이만큼만)
+
+# ── 성장 단일축 추천 개수 ───────────────────────────────
+KR_GROWTH_PICKS = 10
+US_GROWTH_PICKS = 10
+
 # ── 데이터 수집 throttle ─────────────────────────────────
 YF_SLEEP = 0.25        # yfinance .info 호출 간 대기(초)
 YF_RETRY = 2           # 실패 시 재시도 횟수

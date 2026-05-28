@@ -19,7 +19,8 @@ pd.set_option("display.max_columns", 30)
 
 OUT_COLS = ["code", "name", "market", "sector", "industry",
             "score_total", "score_value", "score_quality", "score_growth",
-            "score_momentum", "forwardPE", "returnOnEquity", "revenueGrowth",
+            "score_momentum", "themes_str", "theme_count", "theme_bonus",
+            "forwardPE", "returnOnEquity", "revenueGrowth",
             "earningsGrowth", "ret_6m", "marketCap"]
 
 
@@ -51,21 +52,32 @@ def main():
 
     krp = kr_scored.head(config.KR_PICKS)
     usp = us_scored.head(config.US_PICKS)
+    # 성장 단일축 Top N — 성장 점수 기준 재정렬
+    krg = kr_scored.sort_values("score_growth", ascending=False).head(config.KR_GROWTH_PICKS)
+    usg = us_scored.sort_values("score_growth", ascending=False).head(config.US_GROWTH_PICKS)
 
     today = dt.date.today().isoformat()
     krp[OUT_COLS].to_csv(f"{config.CACHE_DIR}/picks_kr_{today}.csv",
                          index=False, encoding="utf-8-sig")
     usp[OUT_COLS].to_csv(f"{config.CACHE_DIR}/picks_us_{today}.csv",
                          index=False, encoding="utf-8-sig")
+    krg[OUT_COLS].to_csv(f"{config.CACHE_DIR}/picks_kr_growth_{today}.csv",
+                         index=False, encoding="utf-8-sig")
+    usg[OUT_COLS].to_csv(f"{config.CACHE_DIR}/picks_us_growth_{today}.csv",
+                         index=False, encoding="utf-8-sig")
 
     show = ["code", "score_total", "score_value", "score_quality",
             "score_growth", "score_momentum", "forwardPE",
             "returnOnEquity", "revenueGrowth", "ret_6m"]
-    print("\n========== 한국 추천 후보 ==========")
+    print("\n========== 한국 종합 추천 ==========")
     print(krp[show].round(3).to_string())
-    print("\n========== 미국 추천 후보 ==========")
+    print("\n========== 한국 성장 단일축 추천 ==========")
+    print(krg[show].round(3).to_string())
+    print("\n========== 미국 종합 추천 ==========")
     print(usp[show].round(3).to_string())
-    print(f"\n결과 저장: cache/picks_kr_{today}.csv , cache/picks_us_{today}.csv")
+    print("\n========== 미국 성장 단일축 추천 ==========")
+    print(usg[show].round(3).to_string())
+    print(f"\n결과 저장: cache/picks_(kr|us)(_growth)?_{today}.csv")
 
 
 if __name__ == "__main__":

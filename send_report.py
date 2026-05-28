@@ -25,14 +25,20 @@ def _date_of(path):
     return m.group(1) if m else None
 
 
-def main():
-    krp, usp = _latest("picks_kr_*.csv"), _latest("picks_us_*.csv")
-    if not krp or not usp:
-        print("추천 파일이 없습니다. 먼저 `python run.py` 를 실행하세요.")
-        return
+def _latest_pair(market: str):
+    """picks_{market}_*.csv 중 growth가 아닌 최신본과 growth 최신본."""
+    files = sorted(glob.glob(f"{config.CACHE_DIR}/picks_{market}_*.csv"))
+    main = [f for f in files if "_growth_" not in f]
+    growth = [f for f in files if "_growth_" in f]
+    return (main[-1] if main else None), (growth[-1] if growth else None)
 
-    kr = pd.read_csv(krp, dtype={"code": str})
-    us = pd.read_csv(usp, dtype={"code": str})
+
+def main():
+    krp, krg = _latest_pair("kr")
+    usp, usg = _latest_pair("us")
+    if not krp or not usp:
+        print("종합 추천 파일이 없습니다. 먼저 `python run.py` 를 실행하세요.")
+        return
 
     note = ""
     try:
@@ -42,9 +48,22 @@ def main():
     except Exception:
         pass
 
+    kr = pd.read_csv(krp, dtype={"code": str})
+    us = pd.read_csv(usp, dtype={"code": str})
+    # 1) 한국 종합 (cadence note 포함)
     notify.send_telegram(report.build_message("🇰🇷 한국", kr, note, _date_of(krp)))
-    notify.send_telegram(report.build_message("🇺🇸 미국", us, note, _date_of(usp)))
-    print(f"발송 완료: {krp} / {usp}")
+    # 2) 한국 성장 단일축
+    if krg:
+        krg_df = pd.read_csv(krg, dtype={"code": str})
+        notify.send_telegram(report.build_growth_message("🇰🇷 한국", krg_df, _date_of(krg)))
+    # 3) 미국 종합
+    notify.send_telegram(report.build_message("🇺🇸 미국", us, "", _date_of(usp)))
+    # 4) 미국 성장 단일축
+    if usg:
+        usg_df = pd.read_csv(usg, dtype={"code": str})
+        notify.send_telegram(report.build_growth_message("🇺🇸 미국", usg_df, _date_of(usg)))
+
+    print(f"발송 완료: 종합({krp}, {usp}) / 성장({krg}, {usg})")
 
 
 if __name__ == "__main__":
