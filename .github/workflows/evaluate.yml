@@ -1,18 +1,18 @@
-name: Daily Stock Picks → Telegram
+name: Daily Evaluation (KRX close + 1h7m) → Telegram
 
 on:
   schedule:
-    # 매일 23:13 UTC = 08:13 KST 다음날 (정각/30분 회피로 큐 지연 완화)
-    - cron: '13 23 * * *'
+    # 07:37 UTC = 16:37 KST (월~금). KRX 마감 15:30 KST + 1h7m.
+    - cron: '37 7 * * 1-5'
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
 jobs:
-  run:
+  evaluate:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,21 +28,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run daily orchestrator
+      - name: Run evaluator
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           PYTHONIOENCODING: utf-8
-        run: python daily.py
+        run: python evaluate.py
 
-      - name: Commit predictions snapshot
+      - name: Commit evaluation results
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain evaluation/)" ]; then
             git add evaluation/
-            git commit -m "predictions snapshot $(date -u +%Y-%m-%d)"
-            # 충돌 회피 위해 rebase pull 후 push
+            git commit -m "evaluation $(date -u +%Y-%m-%d)"
             git pull --rebase origin main || true
             git push
           else

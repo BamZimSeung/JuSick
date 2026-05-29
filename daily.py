@@ -21,6 +21,40 @@ except Exception:
 KST = timezone(timedelta(hours=9))
 
 
+def _snapshot_kr_predictions() -> None:
+    """오늘자 cache/picks_kr_*.csv를 evaluation/predictions/kr_{date}.csv로 합쳐 저장.
+
+    종합·성장 두 리스트를 type 컬럼으로 구분해 한 파일로 둔다.
+    저녁(16:37 KST) evaluate.py가 이 파일을 읽어 당일 알파를 계산한다.
+    """
+    import os, glob
+    import pandas as pd
+    import config
+
+    today = datetime.now(KST).date().isoformat()
+    main = sorted(glob.glob(f"{config.CACHE_DIR}/picks_kr_{today}.csv"))
+    growth = sorted(glob.glob(f"{config.CACHE_DIR}/picks_kr_growth_{today}.csv"))
+    if not main and not growth:
+        print("predictions 스냅샷: picks 파일 없음 — 스킵")
+        return
+
+    frames = []
+    if main:
+        m = pd.read_csv(main[-1], dtype={"code": str})
+        m["pick_type"] = "종합"
+        frames.append(m)
+    if growth:
+        g = pd.read_csv(growth[-1], dtype={"code": str})
+        g["pick_type"] = "성장"
+        frames.append(g)
+    out = pd.concat(frames, ignore_index=True)
+
+    os.makedirs("evaluation/predictions", exist_ok=True)
+    path = f"evaluation/predictions/kr_{today}.csv"
+    out.to_csv(path, index=False, encoding="utf-8-sig")
+    print(f"predictions 스냅샷 저장: {path} ({len(out)}건)")
+
+
 def _regime_line(m: dict) -> str:
     parts = []
     for label, key in [("KOSPI", "KOSPI"), ("S&P500", "S&P500")]:
@@ -67,6 +101,13 @@ def main() -> int:
         import run, send_report
         run.main()           # 내부에서 cache/picks_kr_*.csv, picks_us_*.csv 생성
         send_report.main()   # 최신 picks 자동 선택 → 텔레그램 발송
+
+        # 평가용 KR 픽 스냅샷 저장 (저녁 evaluate.py가 읽음)
+        try:
+            _snapshot_kr_predictions()
+        except Exception as e:
+            print(f"predictions 스냅샷 저장 실패(무시): {e}")
+
         print("발송: 풀 추천 리포트")
         return 0
 
