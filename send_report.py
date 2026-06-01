@@ -52,11 +52,7 @@ def main():
     us = pd.read_csv(usp, dtype={"code": str})
     # 1) 한국 종합 (cadence note 포함)
     notify.send_telegram(report.build_message("🇰🇷 한국", kr, note, _date_of(krp)))
-    # 2) 한국 성장 단일축
-    if krg:
-        krg_df = pd.read_csv(krg, dtype={"code": str})
-        notify.send_telegram(report.build_growth_message("🇰🇷 한국", krg_df, _date_of(krg)))
-    # 3) 한국 동반강세 산업
+    # 2) 한국 동반강세 산업
     krh = _latest("hot_themes_kr_*.csv")
     if krh:
         try:
@@ -65,7 +61,7 @@ def main():
                 notify.send_telegram(report.build_discovery_message("🇰🇷 한국", krh_df, _date_of(krh)))
         except Exception as e:
             print(f"한국 동반강세 발송 스킵: {e}")
-    # 4) 한국 관심 테마 조사 (로봇·양자·우주)
+    # 3) 한국 관심 테마 조사 (로봇·양자·우주)
     krt = _latest("theme_picks_kr_*.csv")
     if krt:
         try:
@@ -74,10 +70,10 @@ def main():
                 report.build_theme_message("🇰🇷 한국", krt_df, _date_of(krt), config.THEME_WATCH))
         except Exception as e:
             print(f"한국 테마 조사 발송 스킵: {e}")
-    # 5) 미국 — 통합정보(종합)만
+    # 4) 미국 — 통합정보(종합)만
     notify.send_telegram(report.build_message("🇺🇸 미국", us, "", _date_of(usp)))
 
-    print(f"발송 완료: 한국 종합({krp})·성장({krg})·동반강세({krh})·테마({krt}) / 미국 종합({usp})")
+    print(f"발송 완료: 한국 종합({krp})·동반강세({krh})·테마({krt}) / 미국 종합({usp})")
 
 
 if __name__ == "__main__":
