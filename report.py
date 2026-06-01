@@ -189,6 +189,46 @@ def build_growth_message(label, df, date_str=None):
     return "\n".join(out).strip()
 
 
+THEME_LEGEND = (
+    "📖 <b>관심 테마 조사 — 안내</b>\n"
+    "지정 테마(로봇·양자·우주)에 속한 종목을 종합점수 순으로 추린 목록.\n"
+    "테마 노출도를 보는 용도 — 종합 추천과는 별개 기준."
+)
+
+
+def build_theme_message(label, theme_df, date_str=None, themes_order=None):
+    """관심 테마별 상위 종목. theme_df에 watch_theme 컬럼 존재.
+
+    themes_order를 주면 그 순서로 표시하고, 매칭 0인 테마는 '없음'으로 표기.
+    """
+    date_str = date_str or dt.date.today().isoformat()
+    out = [f"🛰 <b>{label} 관심 테마 조사</b>", f"📅 {date_str}", "", THEME_LEGEND, ""]
+
+    if theme_df is not None and not theme_df.empty and "watch_theme" in theme_df.columns:
+        valid = theme_df[theme_df["watch_theme"].notna() & theme_df["code"].notna()]
+        groups = {t: g for t, g in valid.groupby("watch_theme", sort=False)}
+    else:
+        groups = {}
+    order = themes_order or list(groups.keys())
+
+    for theme in order:
+        sub = groups.get(theme)
+        out.append("━━━━━━━━━━━━━━")
+        n = 0 if sub is None else len(sub)
+        out.append(f"🔷 <b>{html.escape(str(theme))}</b>  ({n}종목)")
+        if sub is None or sub.empty:
+            out.append("· 매칭 종목 없음")
+            out.append("")
+            continue
+        for i, (_, r) in enumerate(sub.iterrows(), 1):
+            name = html.escape(str(r["name"]))
+            code = html.escape(str(r["code"]))
+            out.append(f"{i}. <b>{name}</b>  ({code}) — 종합 {r['score_total']:.2f}")
+            out.append(f"   💼 {_business(r)} · 6개월 {_signed_pct(r['ret_6m'])}")
+        out.append("")
+    return "\n".join(out).strip()
+
+
 def build_reports():
     today = dt.date.today().isoformat()
     kr = pd.read_csv(f"{config.CACHE_DIR}/picks_kr_{today}.csv", dtype={"code": str})

@@ -36,6 +36,10 @@ THEMES: dict[str, list[str]] = {
         "로봇", "자동화",
         "robot", "robotics", "automation",
     ],
+    "양자컴퓨팅": [
+        "양자", "양자컴퓨팅", "큐비트",
+        "quantum", "qubit", "quantum computing",
+    ],
     "반도체장비·소재": [
         "반도체장비", "반도체 장비", "반도체소재", "반도체 소재",
         "semiconductor equipment", "semiconductor materials",
@@ -105,6 +109,32 @@ def match_themes(df: pd.DataFrame) -> pd.DataFrame:
     df["themes"] = df.apply(match_themes_one, axis=1)
     df["theme_count"] = df["themes"].apply(len)
     return df
+
+
+# ── 관심 테마별 종목 추출 ─────────────────────────────────
+def pick_by_themes(
+    scored_df: pd.DataFrame,
+    theme_names: list[str],
+    top_n: int = 5,
+    score_col: str = "score_total",
+) -> pd.DataFrame:
+    """지정한 관심 테마별 상위 종목을 종합점수 순으로 추린다.
+
+    themes(리스트) 컬럼 기준으로 필터. theme_names 순서대로 쌓는다.
+    매칭 0종목인 테마는 결과에 행이 없다(발송 측에서 '없음' 표기).
+    """
+    df = scored_df.copy()
+    if "themes" not in df.columns:
+        df = match_themes(df)
+    frames = []
+    for theme in theme_names:
+        sub = df[df["themes"].apply(lambda xs: theme in (xs or []))]
+        sub = sub.sort_values(score_col, ascending=False).head(top_n).copy()
+        sub["watch_theme"] = theme
+        frames.append(sub)
+    if not frames:
+        return pd.DataFrame()
+    return pd.concat(frames, ignore_index=True)
 
 
 # ── 동반강세 발굴 ─────────────────────────────────────────

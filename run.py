@@ -77,6 +77,15 @@ def main():
     us_hot[HOT_COLS].to_csv(f"{config.CACHE_DIR}/hot_themes_us_{today}.csv",
                             index=False, encoding="utf-8-sig")
 
+    # 관심 테마 조사 (국장) — 로봇·양자·우주
+    THEME_OUT_COLS = OUT_COLS + ["watch_theme"]
+    kr_theme = themes.pick_by_themes(
+        kr_scored, config.THEME_WATCH, top_n=config.THEME_PICKS_TOP_N)
+    # 매칭 0이어도 헤더만 남겨 저장 (발송 측이 '없음' 표기)
+    kr_theme = kr_theme.reindex(columns=THEME_OUT_COLS)
+    kr_theme.to_csv(f"{config.CACHE_DIR}/theme_picks_kr_{today}.csv",
+                    index=False, encoding="utf-8-sig")
+
     show = ["code", "score_total", "score_value", "score_quality",
             "score_growth", "score_momentum", "forwardPE",
             "returnOnEquity", "revenueGrowth", "ret_6m"]
@@ -92,6 +101,11 @@ def main():
     print(kr_hot[["industry", "n_stocks", "median_momentum", "median_ret_6m"]].round(3).to_string())
     print("\n========== 미국 동반강세 산업 ==========")
     print(us_hot[["industry", "n_stocks", "median_momentum", "median_ret_6m"]].round(3).to_string())
+    print("\n========== 한국 관심 테마 조사 (로봇·양자·우주) ==========")
+    if kr_theme.dropna(how="all").empty:
+        print("매칭 종목 없음")
+    else:
+        print(kr_theme[["watch_theme", "code", "name", "score_total", "score_momentum", "ret_6m"]].round(3).to_string())
     print(f"\n결과 저장: cache/picks_(kr|us)(_growth)?_{today}.csv , hot_themes_(kr|us)_{today}.csv")
 
 

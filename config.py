@@ -38,6 +38,11 @@ US_GROWTH_PICKS = 10
 HOT_THEME_MIN_STOCKS = 3   # 한 산업 내 최소 종목 수
 HOT_THEME_TOP_N = 5        # 발굴할 상위 산업 수
 
+# ── 관심 테마 조사 (국장 전용) ──────────────────────────
+# 지정 테마에 속한 종목을 종합점수 순으로 별도 추려 발송.
+THEME_WATCH = ["로봇·자동화", "양자컴퓨팅", "우주·위성"]
+THEME_PICKS_TOP_N = 5      # 테마당 상위 종목 수
+
 # ── 데이터 수집 throttle ─────────────────────────────────
 YF_SLEEP = 0.25        # yfinance .info 호출 간 대기(초)
 YF_RETRY = 2           # 실패 시 재시도 횟수
