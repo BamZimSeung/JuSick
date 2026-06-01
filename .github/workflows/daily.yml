@@ -2,8 +2,8 @@ name: Daily Stock Picks → Telegram
 
 on:
   schedule:
-    # 매일 23:13 UTC = 08:13 KST 다음날 (정각/30분 회피로 큐 지연 완화)
-    - cron: '13 23 * * *'
+    # 매일 22:13 UTC = 07:13 KST 다음날 (정각/30분 회피로 큐 지연 완화)
+    - cron: '13 22 * * *'
   workflow_dispatch: {}
 
 permissions:
